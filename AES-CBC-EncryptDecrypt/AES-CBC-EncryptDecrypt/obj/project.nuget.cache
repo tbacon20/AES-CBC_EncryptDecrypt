@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "LYoyj8jR4xOX2r8+zHDR0OKJy6ZS8Qyf6gLr+6Eo3V/w4kycQ697NvUxNaNAGUPzjrhvFFDYtEETK0+3QDiz1Q==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Tanner\\ISCore\\WINTER 2023\\IS414 Security\\Labs\\Lab2\\AES-CBC-EncryptDecrypt\\AES-CBC-EncryptDecrypt\\AES-CBC-EncryptDecrypt.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Tanner\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\3.1.25\\microsoft.netcore.app.host.win-x64.3.1.25.nupkg.sha512"
+  ],
+  "logs": []
+}
