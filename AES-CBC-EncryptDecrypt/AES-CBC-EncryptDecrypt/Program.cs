@@ -10,49 +10,31 @@ namespace AES_CBC_EncryptDecrypt
     {
         static void Main(string[] args)
         {
-            // Our inputs in ASCII
-            string password = "drpepperissuperior";
-            string plaintext = "journeybeforedestination";
+            // Path to the file
+            FilePath fp = new FilePath();
+            string filePath = fp.filePath;
+            string fileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), filePath, "PO-encrypted.pdf");
+            DecryptPDF(filePath, fileName);
 
-            /*
-            string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "ISCore/WINTER 2023/IS414 Security/Labs/Lab2", "PO-encrypted.pdf");
-            using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-            {
-                byte[] buffer = new byte[fileStream.Length];
-                fileStream.Read(buffer, 0, buffer.Length);
+            // The following can be used to encrypt and/or decrypt for additional functionality
 
-                // Read the nonce/IV from the file
-                byte[] nonce = new byte[16];
-                fileStream.Read(nonce, 0, nonce.Length);
+            //// Our inputs in ASCII
+            //string password = "drpepperissuperior";
+            //string plaintext = "journeybeforedestination";
 
-                // Read the encrypted data from the file
-                byte[] encryptedData = new byte[fileStream.Length - nonce.Length];
-                fileStream.Read(encryptedData, 0, encryptedData.Length);
+            //// calling our AES Encryption Method
+            //byte[] cipherBytes = Encrypt(password, plaintext);
 
+            //// Hexadecimal notation is easy to read, so we'll convert our byte array to hex for writing to the console.
+            //// If we were saving this to file, we likely would not want to convert to hex.
+            //string cipherHex = BitConverter.ToString(cipherBytes).Replace("-", ""); // This is a simple way to get a hex string from a byte[]
 
-                string decryptedMessage = Decrypt(encryptedData, password);
-                Console.WriteLine("Decrypted Message: " + decryptedMessage);
+            //Console.WriteLine("PlainText: " + plaintext);
+            //Console.WriteLine("CipherText with IV (Hex): " + cipherHex);
 
-                //plaintext = Encoding.UTF8.GetString(buffer);
-                //Console.WriteLine(plaintext);
-                // Do something with the contents of the file, stored in the buffer
-            }
-            */
-
-
-            // calling our AES Encryption Method
-            byte[] cipherBytes = Encrypt(password, plaintext);
-
-            // Hexadecimal notation is easy to read, so we'll convert our byte array to hex for writing to the console.
-            // If we were saving this to file, we likely would not want to convert to hex.
-            string cipherHex = BitConverter.ToString(cipherBytes).Replace("-", ""); // This is a simple way to get a hex string from a byte[]
-
-            Console.WriteLine("PlainText: " + plaintext);
-            Console.WriteLine("CipherText with IV (Hex): " + cipherHex);
-
-            // Call our decryption method
-            string decryptedMessage = Decrypt(cipherBytes, password);
-            Console.WriteLine("Decrypted Message: " + decryptedMessage);
+            //// Call our decryption method
+            //string decryptedMessage = Decrypt(cipherBytes, password);
+            //Console.WriteLine("Decrypted Message: " + decryptedMessage);
         }
 
         public static byte[] Encrypt(string password, string message)
@@ -131,6 +113,37 @@ namespace AES_CBC_EncryptDecrypt
             string decryptedText = streamReader.ReadToEnd(); // Read all the way to the end and output as a string
 
             return decryptedText;
+        }
+
+        public static void DecryptPDF(string filePath, string fileName)
+        {
+            string password = "drpepperissuperior";
+
+            // Again, we need to convert (derive) our key from the string password.
+            // We'll use a SHA256 hash again for this
+            byte[] key = SHA256.Create().ComputeHash(Encoding.ASCII.GetBytes(password));
+
+            // Let's read our bytes into a memory stream. If we were decrypting a file, we would probably use a Filestream
+            using FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+
+            // Create our instance of the AES algorithm and set its properties
+            using Aes aes = Aes.Create();
+            aes.Mode = CipherMode.CBC; // Match the encryption mode with the encrypt method
+            aes.Padding = PaddingMode.PKCS7; // Again, match the padding type with the encrypt method
+
+            // In this case, we need to get the IV that was prepended to our encrypted data
+            byte[] iv = new byte[aes.IV.Length]; // create an array of the proper length (default IV length is what we want)
+            fs.Read(iv, 0, iv.Length); // read the IV from the beginning of our memory stream and populate our iv byte[]
+
+            // We'll create a new cryptostream, this time with a Decryptor and in read mode
+            using CryptoStream cryptStream = new CryptoStream(fs, aes.CreateDecryptor(key, iv), CryptoStreamMode.Read);
+
+            // We're going to read the decrypted information from the cryptostream using a streamreader
+            BinaryReader reader = new BinaryReader(cryptStream);
+            byte[] pdfbytes = ReadAllBytes(reader);
+
+            string newPDFpath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), filePath, "PO-Decrypted.pdf");
+            File.WriteAllBytes(newPDFpath, pdfbytes);
         }
 
         /// <summary>
